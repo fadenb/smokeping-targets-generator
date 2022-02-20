@@ -49,14 +49,16 @@ host = anotherhost.example.com
 
 import argparse
 import base64
-import ConfigParser
+import configparser
 import sys
+
 
 def smokeping_safe_key(text):
     """
     Returns an alphanumeric key safe to use in a smokeping configuration file.
     """
     return base64.b16encode(text) + '_' + "".join([c for c in text if c.isalpha() or c.isdigit() or c is ' ' or c is '.']).replace(' ', '_').replace('.', '_')
+
 
 def render_section(section, config, _depth=1):
     """
@@ -87,10 +89,12 @@ def render_section(section, config, _depth=1):
         output += "host = %s\n\n" % hostname
 
     # Step 3: recursively find all the subsections of this one
-    for subsection in set([subsection.split(':')[_depth] for subsection in config.sections() if subsection.startswith("%s:" % section)]):
-        output += render_section("%s:%s" % (section, subsection), config, _depth+1)
+    for subsection in {subsection.split(':')[_depth] for subsection in config.sections() if subsection.startswith("%s:" % section)}:
+        output += render_section("%s:%s" %
+                                 (section, subsection), config, _depth+1)
 
     return output
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(
@@ -98,15 +102,20 @@ if __name__ == '__main__':
         description="\n".join(__doc__.splitlines(False)[1:3]),
         epilog="\n".join(__doc__.splitlines(False)[3:])
     )
-    parser.add_argument('--probe', help='probe to use, defaults to "FPing"', default="FPing")
-    parser.add_argument('--menu', help='top level menu name, defaults to "Top"', default="Top")
-    parser.add_argument('--title', help='top level title, defaults to "Network Latency Graphs"', default="Network Latency Graphs")
-    parser.add_argument('--remark', help='top level remark, defaults to empty if not specified', default=None)
-    parser.add_argument('file', nargs='?', help='file to read from, defaults to stdin', default='-')
+    parser.add_argument(
+        '--probe', help='probe to use, defaults to "FPing"', default="FPing")
+    parser.add_argument(
+        '--menu', help='top level menu name, defaults to "Top"', default="Top")
+    parser.add_argument(
+        '--title', help='top level title, defaults to "Network Latency Graphs"', default="Network Latency Graphs")
+    parser.add_argument(
+        '--remark', help='top level remark, defaults to empty if not specified', default=None)
+    parser.add_argument(
+        'file', nargs='?', help='file to read from, defaults to stdin', default='-')
 
     args = parser.parse_args()
 
-    config = ConfigParser.ConfigParser(allow_no_value=True)
+    config = configparser.ConfigParser(allow_no_value=True)
     if args.file == '-':
         config.readfp(sys.stdin)
     else:
@@ -135,11 +144,12 @@ title = %s%s\n
             new_section_name = ':'.join(section_name_components[0:index+1])
             try:
                 config.add_section(new_section_name)
-            except ConfigParser.DuplicateSectionError:
+            except configparser.DuplicateSectionError:
                 pass
 
-    top_level_sections = [section for section in config.sections() if ':' not in section]
+    top_level_sections = [
+        section for section in config.sections() if ':' not in section]
     for section in top_level_sections:
         output += render_section(section, config)
 
-    print output.strip()
+    print(output.strip())
