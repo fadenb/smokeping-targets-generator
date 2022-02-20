@@ -49,7 +49,7 @@ host = anotherhost.example.com
 
 import argparse
 import base64
-import ConfigParser
+import configparser
 import sys
 
 def smokeping_safe_key(text):
@@ -87,7 +87,7 @@ def render_section(section, config, _depth=1):
         output += "host = %s\n\n" % hostname
 
     # Step 3: recursively find all the subsections of this one
-    for subsection in set([subsection.split(':')[_depth] for subsection in config.sections() if subsection.startswith("%s:" % section)]):
+    for subsection in {subsection.split(':')[_depth] for subsection in config.sections() if subsection.startswith("%s:" % section)}:
         output += render_section("%s:%s" % (section, subsection), config, _depth+1)
 
     return output
@@ -106,7 +106,7 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    config = ConfigParser.ConfigParser(allow_no_value=True)
+    config = configparser.ConfigParser(allow_no_value=True)
     if args.file == '-':
         config.readfp(sys.stdin)
     else:
@@ -135,11 +135,11 @@ title = %s%s\n
             new_section_name = ':'.join(section_name_components[0:index+1])
             try:
                 config.add_section(new_section_name)
-            except ConfigParser.DuplicateSectionError:
+            except configparser.DuplicateSectionError:
                 pass
 
     top_level_sections = [section for section in config.sections() if ':' not in section]
     for section in top_level_sections:
         output += render_section(section, config)
 
-    print output.strip()
+    print(output.strip())
